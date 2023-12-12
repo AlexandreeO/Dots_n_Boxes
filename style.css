@@ -1,0 +1,62 @@
+#dots {
+    display: grid;
+}
+
+#r0c0 {
+    height: 100px;
+    width: 100px;
+}
+
+#r0c1 {
+    height: 100px;
+    width: 100px;
+}
+
+.line {
+    position: absolute;
+    width: 1px;
+    background-color: rgb(236, 160, 27);
+    transform-origin: top left;
+}
+
+body {
+    background-color: black;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+h1 {
+    /* Font imported from Google Fonts */
+    font-family: "Bungee Spice"; 
+    font-size: 50px;
+}
+
+
+.start-btn{
+    text-align: center;
+	display: inline-block;
+    font-size: 30pt;
+    font-family: 'Press Start 2p';
+	margin:5px;
+    font-weight: bold;
+    padding: 10px 0 10px 10px ;
+    background-color: lightgray;
+    text-shadow: -1px -1px black, 1px 1px white;
+    color: gray;
+    -webkit-border-radius: 7px;
+	-moz-border-radius: 7px;
+	-o-border-radius: 7px;
+	border-radius: 7px;
+    box-shadow: 0 .2em gray; 
+    cursor: pointer;
+
+}
+.start-btn:active {
+	box-shadow: none;
+	position: relative;
+	top: .2em;
+
+}

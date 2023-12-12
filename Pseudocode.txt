@@ -1,0 +1,146 @@
+https://www.tldraw.com/r/xwjH3i4mgteHrrSbdyZr_?viewport=0%2C0%2C1728%2C798&page=page%3Acvl-ZcQhDkjA7ZrBTXUxx
+
+
+
+
+Init():
+1. Create a grid of dots (n x m)
+2. Initialize an empty set to store completed boxes
+3. Initialize players and set the starting player
+
+Game logic:
+4. While there are still lines to draw:
+    5. Display the current state of the grid
+    6. Get input from the user (current player) for a line (two adjacent dots - same colunm or same row)
+    7. Check if the line is valid and not already drawn:
+        8. If valid:
+            9. Draw the line on the grid
+            10. Check if any boxes are completed:
+                11. If a box is completed:
+                    12. Mark the box as completed and assign it to the current player
+                    13. Player gets another turn
+                14. Else:
+                    15. Switch to the next player
+        16. Else (line is already drawn):
+            17. Ask the current player for input again
+
+End of Game:
+18. Display the final grid with completed boxes and scores
+19. Declare the winner (player with the most boxes)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*----- constants -----*/
+// grid size variables (nrows and ncolumns)
+// player-related variables (e.g. player 1, player 2, their colours for when they complete a square)
+// game state related variables (e.g. starting player, tie, dics in row to win)
+// squares (objects - keys: right, right, left, bottom, top lines)
+
+/*----- HTML elements -----*/
+// dot-grid, play again button
+
+/*----- state variables -----*/
+board array with dot-objects within each array element
+current player
+winner
+selected dot
+/*----- event listeners -----*/
+// click listener for connecting dots
+
+
+
+// click listener for play again button - call initialise
+
+/*----- functions -----*/
+initialise();
+
+function initialise() {
+    // initialise grid with dots through for loops for rows and colums to create the dot-objects
+
+    // initialise current player and winner
+
+    // call render
+}
+
+function render() {
+  renderBoard();
+  renderStatusMessage();
+  renderdots();
+}
+
+function renderBoard() {
+  // render each disc with background colour based on its value
+}
+
+function renderStatusMessage() {
+  // status msg for tie
+
+  // status msg for winner
+
+  // status msg for current player
+}
+
+function renderMarkers() {
+  // if game still in play and column not full
+    // marker visibility = visible
+  // else
+    // visibility = hidden
+}
+
+
+
+
+HTML file:
+HTML elements
+
+
+
+
+
+
+old create line function (vishal)
+
+// function createLine() {
+//     /**
+//      * Make use of lineCoOrdinates and RESET all values to 0 after drawing line
+//      * */
+//     // x2-x1
+// // svg link reference - didn't know how to draw the line, so used info in the link --> https://stackoverflow.com/questions/19382872/how-to-connect-html-divs-with-lines/35493651#35493651
+//     console.log(lineCoOrdinates);
+//     for (let dotPair in allLines) {
+//         console.log(allLines[dotPair]);
+//         const svg = document.createElement("div");
+//         svg.style.position = "absolute";
+//         svg.style.top = "26px";
+//         svg.innerHTML = `<svg
+//             height="50"
+//             width="30"
+//             style="position: absolute; top: 71px; left: 34px; z-index: auto"
+//         >
+//         <rect x="18.5" width="7" height="50" rx="5" />
+//         </svg>`;
+
+//         dotsParent.appendChild(svg);
+//     }
+// }
