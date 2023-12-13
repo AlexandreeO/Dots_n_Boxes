@@ -2,9 +2,10 @@
     display: grid;
     border: 2px solid rgb(236, 160, 27);
     border-radius: 6%;
+    
 }
 
-h3 {
+h2, h3 {
     margin-top: 0;
     color: orange;
     font-family: "Bungee Spice";
@@ -24,8 +25,12 @@ h3 {
     justify-content: center;
     padding-right: 0.5%;
     padding-top: 7.4%;
+    z-index: 12;
 }
 
+.square{
+    border: 1px solid black;
+}
 
 
 #r0c0 {
@@ -78,6 +83,7 @@ h1 {
     box-shadow: 0 0.2em gray;
     cursor: pointer;
     margin-top: 20px;
+    z-index: 15;
 }
 #restart-btn:active {
     box-shadow: none;

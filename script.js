@@ -4,12 +4,15 @@ const GRID_ROWS = 6;
 const GRID_COLUMNS = 6;
 const PLAYER1 = 1;
 const PLAYER2 = 2;
-const COLOUR = { PLAYER1: "red", PLAYER2: "green" };
+const COLOUR = { [PLAYER1]: "red", [PLAYER2]: "green" };
+const SCORES = { [PLAYER1]: 0, [PLAYER2]: 0 };
 const allDots = {};
 const allLines = [["r0c1", "r0c2"]];
 const dotsParent = document.querySelector("#dots");
 const squareParent = document.querySelector("#squares");
 const restartButton = document.getElementById("restart-btn");
+const playerTurn = document.getElementById("player-turn");
+const scoreEl = document.getElementById("scores");
 const GAME_STATE = [];
 
 // /*----- state/global variables -----*/
@@ -19,6 +22,7 @@ let secondDotClickID;
 let currentPlayer;
 let firstClickedDotEl;
 let secondClickedDotEl;
+let isSquareFormed = false;
 
 // /*----- global event listeners -----*/
 
@@ -28,8 +32,8 @@ restartButton.addEventListener("click", restartGame);
 
 function init() {
     currentPlayer = PLAYER1;
-    for (let row = 0; row <= GRID_ROWS - 1; row++) {
-        for (let column = 0; column <= GRID_COLUMNS - 1; column++) {
+    for (let row = 0; row <= GRID_ROWS; row++) {
+        for (let column = 0; column <= GRID_COLUMNS; column++) {
             const square = {
                 row,
                 column,
@@ -84,12 +88,7 @@ function renderUpdate() {
         const squareDiv = document.getElementById(identifier);
 
         // updates the color of the square if it is owned
-        if (square.owner === PLAYER1) {
-            squareDiv.style.backgroundColor = COLOUR.PLAYER1;
-            // squareDiv.style.border = "3px solid green"
-        } else if (square.owner === PLAYER2) {
-            squareDiv.style.backgroundColor = COLOUR.PLAYER2;
-        }
+        squareDiv.style.backgroundColor = COLOUR[square.owner];
     });
 }
 
@@ -105,7 +104,7 @@ function handleDotClick(event) {
         lineCoOrdinates.x1 = event["x"];
         lineCoOrdinates.y1 = event["y"];
         event.target.style.backgroundColor = "grey";
-        console.log(allDots);
+        // console.log(allDots);
         // This is first click region
         // This gives us x1 and y1
         isFirstClick = false;
@@ -124,9 +123,19 @@ function handleDotClick(event) {
             allDots[secondDotClickID] = true;
             // Check if a square is formed after each valid line creation -> The user who created this square formation line gets the point
             createLine();
+            console.log(`CurrentPLayer: ${currentPlayer}`);
+            // if player completes a box, don't switch player
+            if (!isSquareFormed) {
+                switchPlayer();
+            } else {
+                isSquareFormed = false;
+                displayWinner();
+            }
         } else {
             resetDotColourIfInvalidChoice();
-            alert("Invalid Choice - select only adjecent dots");
+            const invalidMoveMessage = playerTurn.innerText;
+            playerTurn.innerText = `TRY AGAIN - SELECT ONLY ADJENCENT DOTS`;
+            setTimeout(() => {playerTurn.innerText = invalidMoveMessage;} ,1200)
             // to do - display error message (invalid secod click)
         }
     }
@@ -201,18 +210,26 @@ function createLine() {
     updateGameState();
     renderUpdate();
 }
-
 function updateSquare(squareIndex, side) {
     //'top' or 'left' or 'right' or 'bottom'
     const square = GAME_STATE[squareIndex];
+    console.log({square,squareIndex})
     square[side] = true;
     // check if all the sides are complete
     if (square.left && square.right && square.top && square.bottom) {
         square.owner = currentPlayer;
+        isSquareFormed = true;
+        SCORES[currentPlayer] += 1;
+        renderScores();
     }
+    // square.owner = currentPlayer;
 
     // if a player has claimed the square, keep their turn
     // otherwise switch player
+}
+
+function renderScores() {
+    scoreEl.innerText = `Player1 :  ${SCORES[PLAYER1]}   |   Player2 :   ${SCORES[PLAYER2]}`;
 }
 
 function updateGameState() {
@@ -269,8 +286,47 @@ function checkIfValidDotClicks() {
 // function generateRandomComputerMove() {}  ----> optional
 // function makeComputerMove() {}  ----> optional
 
-function switchPlayer(PLAYER1, PLAYER2) {
+function switchPlayer() {
     currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
+    playerTurn.innerText = `Player ${currentPlayer}'s turn`;
+}
+
+function displayWinner() {
+    const totalSquares = GRID_ROWS * GRID_COLUMNS;
+
+    if (totalSquares !== SCORES[PLAYER1] + SCORES[PLAYER2]) {return}
+    playerTurn.innerText = SCORES[PLAYER1] > SCORES[PLAYER2] ? `Player1 WINS!` : `Player2 WINS!`
+    const duration = 5 * 1000,
+        animationEnd = Date.now() + duration,
+        defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        // since particles fall down, start a bit higher than random
+        confetti(
+            Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+            })
+        );
+        confetti(
+            Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+            })
+        );
+    }, 250);
 }
 
 function restartGame() {
@@ -278,7 +334,6 @@ function restartGame() {
 }
 
 init();
-
 // console.log(allDots);
 
 /**

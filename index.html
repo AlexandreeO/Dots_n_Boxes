@@ -26,14 +26,20 @@
             rel="stylesheet"
         />
 
+        <!-- confetti effect - win -->
+        <script src="https://cdn.jsdelivr.net/npm/@tsparticles/confetti@3.0.2/tsparticles.confetti.bundle.min.js"></script>
     </head>
     <body>
         <h1>DOTS & BOXES</h1>
-        <h3>WHo's turn</h2>
+        <h2 id="scores">
+            Player1&nbsp;: 0&nbsp;&nbsp;&nbsp;| &nbsp;&nbsp;&nbsp;Player2&nbsp;:
+            0
+        </h2>
+        <h3 id="player-turn">Who's turn</h3>
+
         <div class="grid-container">
             <div id="dots"></div>
             <div id="squares"></div>
-            
         </div>
         <span id="restart-btn">RESTART</span>
     </body>
