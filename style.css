@@ -1,6 +1,9 @@
 #dots {
     display: grid;
+    border: 2px solid rgb(236, 160, 27);
+    border-radius: 6%;
 }
+
 
 #r0c0 {
     height: 100px;
@@ -13,6 +16,7 @@
 }
 
 .line {
+
     position: absolute;
     width: 1px;
     background-color: rgb(236, 160, 27);
@@ -26,21 +30,21 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    
 }
 
 h1 {
-    /* Font imported from Google Fonts */
+    /* Font imported from Google Fonts https://fonts.google.com/specimen/Press+Start+2P?selection.family=Poiret+One&query=press+start */
     font-family: "Bungee Spice"; 
     font-size: 50px;
 }
 
-
-.start-btn{
+/* reference - https://codepen.io/reulison/pen/WNNVPZq */
+#restart-btn{
     text-align: center;
 	display: inline-block;
-    font-size: 30pt;
+    font-size: 20pt;
     font-family: 'Press Start 2p';
-	margin:5px;
     font-weight: bold;
     padding: 10px 0 10px 10px ;
     background-color: lightgray;
@@ -52,9 +56,9 @@ h1 {
 	border-radius: 7px;
     box-shadow: 0 .2em gray; 
     cursor: pointer;
-
+    margin-top: 20px;
 }
-.start-btn:active {
+#restart-btn:active {
 	box-shadow: none;
 	position: relative;
 	top: .2em;
