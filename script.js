@@ -8,7 +8,9 @@ const COLOUR = { PLAYER1: "red", PLAYER2: "green" };
 const allDots = {};
 const allLines = [["r0c1", "r0c2"]];
 const dotsParent = document.querySelector("#dots");
+const squareParent = document.querySelector("#squares");
 const restartButton = document.getElementById("restart-btn");
+const GAME_STATE = [];
 
 // /*----- state/global variables -----*/
 
@@ -24,11 +26,35 @@ restartButton.addEventListener("click", restartGame);
 
 /*----- FUNCTIONS -----*/
 
+function init() {
+    currentPlayer = PLAYER1;
+    for (let row = 0; row <= GRID_ROWS - 1; row++) {
+        for (let column = 0; column <= GRID_COLUMNS - 1; column++) {
+            const square = {
+                row,
+                column,
+                owner: null,
+                top: false,
+                right: false,
+                bottom: false,
+                left: false,
+            };
+            GAME_STATE.push(square);
+        }
+    }
+
+    renderDots();
+    renderBoxes();
+    renderUpdate();
+}
+
 function makeGridPerSelection() {
     dotsParent.style.gridTemplateRows = `repeat(${GRID_ROWS + 1}, 10vmin)`;
     dotsParent.style.gridTemplateColumns = `repeat(${
         GRID_COLUMNS + 1
     }, 10vmin)`;
+    squareParent.style.gridTemplateRows = `repeat(${GRID_ROWS}, 10vmin)`;
+    squareParent.style.gridTemplateColumns = `repeat(${GRID_COLUMNS}, 10vmin)`;
 }
 
 function renderDots() {
@@ -38,6 +64,33 @@ function renderDots() {
             createDotDiv(row, column);
         }
     }
+}
+
+function renderBoxes() {
+    GAME_STATE.forEach((square) => {
+        const identifier = `square_r${square.row}c${square.column}`;
+
+        /** Dom Logic */
+        const squareDiv = document.createElement("div");
+        squareDiv.id = identifier;
+        squareDiv.className = "square";
+        squareParent.appendChild(squareDiv);
+    });
+}
+
+function renderUpdate() {
+    GAME_STATE.forEach((square) => {
+        const identifier = `square_r${square.row}c${square.column}`;
+        const squareDiv = document.getElementById(identifier);
+
+        // updates the color of the square if it is owned
+        if (square.owner === PLAYER1) {
+            squareDiv.style.backgroundColor = COLOUR.PLAYER1;
+            // squareDiv.style.border = "3px solid green"
+        } else if (square.owner === PLAYER2) {
+            squareDiv.style.backgroundColor = COLOUR.PLAYER2;
+        }
+    });
 }
 
 // x1, y1 -> For first dot click
@@ -82,12 +135,12 @@ function handleDotClick(event) {
 // if dot selection is invalid, the function below will make the background black again, and will also change the value of the allDots element to null, so it doesn't count.
 function resetDotColourIfInvalidChoice() {
     for (let dotID in allDots) {
-        if(dotID === firstDotClickID && allDots[dotID] !== true) {
+        if (dotID === firstDotClickID && allDots[dotID] !== true) {
             firstClickedDotEl.style.backgroundColor = "black";
         }
-        if(dotID === secondDotClickID && allDots[dotID] !== true) {
+        if (dotID === secondDotClickID && allDots[dotID] !== true) {
             secondClickedDotEl.style.backgroundColor = "black";
-            }
+        }
     }
     firstClickedDotEl = secondClickedDotEl = null;
 }
@@ -132,34 +185,71 @@ function createLine() {
 
     if (lineLengthX === 0) {
         // Vertical line
-        line.style.width = "3px";
+        line.style.width = "4px";
         line.style.height = `${lineLengthY}px`;
     } else if (lineLengthY === 0) {
         // Horizontal line
         line.style.width = `${lineLengthX}px`;
-        line.style.height = "3px";
+        line.style.height = "4px";
     }
 
     line.style.top = `${Math.min(y1, y2)}px`;
     line.style.left = `${Math.min(x1, x2)}px`;
 
     dotsParent.appendChild(line);
+
+    updateGameState();
+    renderUpdate();
 }
 
-const dotLocation = { r1: 0, r2: 0, c1: 0, c2: 0 };
+function updateSquare(squareIndex, side) {
+    //'top' or 'left' or 'right' or 'bottom'
+    const square = GAME_STATE[squareIndex];
+    square[side] = true;
+    // check if all the sides are complete
+    if (square.left && square.right && square.top && square.bottom) {
+        square.owner = currentPlayer;
+    }
+
+    // if a player has claimed the square, keep their turn
+    // otherwise switch player
+}
+
+function updateGameState() {
+    // get the square and side  corresponding to firstDotClickID, secondDotClickID
+    // this MAY be two squares.
+    // update GAME_STATE[square] each of these sides.
+    const dotLocation = extractDotRowsAndColumns();
+
+    const isVerticalLine = dotLocation.r1 !== dotLocation.r2;
+
+    // "primary" square
+    const squareRow = Math.min(dotLocation.r1, dotLocation.r2);
+    const squareCol = Math.min(dotLocation.c1, dotLocation.c2);
+    const primaryIndex = squareRow * GRID_COLUMNS + squareCol;
+
+    updateSquare(primaryIndex, isVerticalLine ? "left" : "top");
+
+    //secondary (joining square)
+    const secondaryColumn = isVerticalLine ? squareCol - 1 : squareCol;
+    const secondaryRow = isVerticalLine ? squareRow : squareRow - 1;
+    if (secondaryColumn < 0 || secondaryRow < 0) return;
+
+    const secondaryIndex = secondaryRow * GRID_COLUMNS + secondaryColumn;
+    updateSquare(secondaryIndex, isVerticalLine ? "right" : "bottom");
+}
 
 function extractDotRowsAndColumns() {
-    dotLocation.r1 = firstDotClickID.charAt(1);
-    dotLocation.r2 = secondDotClickID.charAt(1);
-    dotLocation.c1 = firstDotClickID.charAt(3);
-    dotLocation.c2 = secondDotClickID.charAt(3);
+    return {
+        r1: firstDotClickID.charAt(1),
+        r2: secondDotClickID.charAt(1),
+        c1: firstDotClickID.charAt(3),
+        c2: secondDotClickID.charAt(3),
+    };
 }
 
 function checkIfValidDotClicks() {
-    console.log(firstDotClickID);
-    console.log(secondDotClickID);
-
-    extractDotRowsAndColumns();
+    const dotLocation = extractDotRowsAndColumns();
     //should return true or false
     if (
         dotLocation.r1 === dotLocation.r2 &&
@@ -179,8 +269,6 @@ function checkIfValidDotClicks() {
 // function generateRandomComputerMove() {}  ----> optional
 // function makeComputerMove() {}  ----> optional
 
-
-
 function switchPlayer(PLAYER1, PLAYER2) {
     currentPlayer = currentPlayer === PLAYER1 ? PLAYER2 : PLAYER1;
 }
@@ -189,12 +277,12 @@ function restartGame() {
     window.location.reload();
 }
 
-renderDots();
+init();
 
 // console.log(allDots);
 
 /**
- * TODO: 
+ * TODO:
  * 1. Check if a square is formed after each valid line creation -> The user who created this square formation line gets the point
  * 2. Win logic to compute the winner
  * 3. Optional -> Computer makes a move (vs Computer mode)
