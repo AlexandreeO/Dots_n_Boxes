@@ -1,10 +1,11 @@
-// /*----- constants -----*/
-
+// Constants for game configuration
 const GRID_ROWS = 6;
 const GRID_COLUMNS = 6;
 const PLAYER1 = 1;
 const PLAYER2 = 2;
-const COLOUR = { [PLAYER1]: "red", [PLAYER2]: "green" };
+
+// Other constants, variables, and DOM element references...
+const COLOUR = { [PLAYER1]: "brown", [PLAYER2]: "teal" };
 const SCORES = { [PLAYER1]: 0, [PLAYER2]: 0 };
 const allDots = {};
 const allLines = [["r0c1", "r0c2"]];
@@ -29,8 +30,9 @@ let isSquareFormed = false;
 restartButton.addEventListener("click", restartGame);
 
 /*----- FUNCTIONS -----*/
-
+// Initialization function to set up the game
 function init() {
+    // Initialize game state and variables...
     currentPlayer = PLAYER1;
     for (let row = 0; row <= GRID_ROWS; row++) {
         for (let column = 0; column <= GRID_COLUMNS; column++) {
@@ -46,22 +48,17 @@ function init() {
             GAME_STATE.push(square);
         }
     }
-
+    // Calls the functions to render the grid, dots, squares, and update display
     renderDots();
     renderBoxes();
     renderUpdate();
+    addHoverEffectToDots()
 }
 
-function makeGridPerSelection() {
-    dotsParent.style.gridTemplateRows = `repeat(${GRID_ROWS + 1}, 10vmin)`;
-    dotsParent.style.gridTemplateColumns = `repeat(${
-        GRID_COLUMNS + 1
-    }, 10vmin)`;
-    squareParent.style.gridTemplateRows = `repeat(${GRID_ROWS}, 10vmin)`;
-    squareParent.style.gridTemplateColumns = `repeat(${GRID_COLUMNS}, 10vmin)`;
-}
+// Functions to render the grid, dots, and squares
 
 function renderDots() {
+    // Logic to create dots and place them on the grid
     makeGridPerSelection();
     for (let row = 0; row <= GRID_ROWS; row++) {
         for (let column = 0; column <= GRID_COLUMNS; column++) {
@@ -71,6 +68,7 @@ function renderDots() {
 }
 
 function renderBoxes() {
+    // Logic to create boxes on the grid
     GAME_STATE.forEach((square) => {
         const identifier = `square_r${square.row}c${square.column}`;
 
@@ -83,11 +81,12 @@ function renderBoxes() {
 }
 
 function renderUpdate() {
+    // Update the game state and render changes on the board
     GAME_STATE.forEach((square) => {
         const identifier = `square_r${square.row}c${square.column}`;
         const squareDiv = document.getElementById(identifier);
 
-        // updates the color of the square if it is owned
+        // updates the color of the square if it is owned by a player
         squareDiv.style.backgroundColor = COLOUR[square.owner];
     });
 }
@@ -97,31 +96,31 @@ function renderUpdate() {
 let isFirstClick = true;
 const lineCoOrdinates = { x1: 0, y1: 0, x2: 0, y2: 0 };
 
+// Functions to handle user interactions and game logic
+
 function handleDotClick(event) {
     if (isFirstClick) {
+        // This is first click region
+        // This gives us x1 and y1
         firstClickedDotEl = event.target;
         firstDotClickID = event.target.id;
         lineCoOrdinates.x1 = event["x"];
         lineCoOrdinates.y1 = event["y"];
         event.target.style.backgroundColor = "grey";
-        // console.log(allDots);
-        // This is first click region
-        // This gives us x1 and y1
         isFirstClick = false;
     } else {
+        // This is second click region
+        // This gives us x2 and y2
         secondClickedDotEl = event.target;
         secondDotClickID = event.target.id;
         lineCoOrdinates.x2 = event["x"];
         lineCoOrdinates.y2 = event["y"];
         event.target.style.backgroundColor = "grey";
-
-        // This is second click region
-        // This gives us x2 and y2
         isFirstClick = true;
         if (checkIfValidDotClicks()) {
+            // Check if a square is formed after each valid line creation -> The user who created this square formation line gets the point
             allDots[firstDotClickID] = true;
             allDots[secondDotClickID] = true;
-            // Check if a square is formed after each valid line creation -> The user who created this square formation line gets the point
             createLine();
             console.log(`CurrentPLayer: ${currentPlayer}`);
             // if player completes a box, don't switch player
@@ -133,12 +132,92 @@ function handleDotClick(event) {
             }
         } else {
             resetDotColourIfInvalidChoice();
+            // display error message (invalid second click)
             const invalidMoveMessage = playerTurn.innerText;
             playerTurn.innerText = `TRY AGAIN - SELECT ONLY ADJENCENT DOTS`;
-            setTimeout(() => {playerTurn.innerText = invalidMoveMessage;} ,1200)
-            // to do - display error message (invalid secod click)
+            setTimeout(() => {
+                playerTurn.innerText = invalidMoveMessage;
+            }, 1200);
         }
     }
+}
+
+function updateGameState() {
+    // Logic to update the game state based on user moves
+    const dotLocation = extractDotRowsAndColumns();
+
+    const isVerticalLine = dotLocation.r1 !== dotLocation.r2;
+
+    // "primary" square
+    const squareRow = Math.min(dotLocation.r1, dotLocation.r2);
+    const squareCol = Math.min(dotLocation.c1, dotLocation.c2);
+    const primaryIndex = squareRow * GRID_COLUMNS + squareCol;
+
+    updateSquare(primaryIndex, isVerticalLine ? "left" : "top");
+
+    //secondary (joining square)
+    const secondaryColumn = isVerticalLine ? squareCol - 1 : squareCol;
+    const secondaryRow = isVerticalLine ? squareRow : squareRow - 1;
+    if (secondaryColumn < 0 || secondaryRow < 0) return;
+
+    const secondaryIndex = secondaryRow * GRID_COLUMNS + secondaryColumn;
+    updateSquare(secondaryIndex, isVerticalLine ? "right" : "bottom");
+}
+
+function displayWinner() {
+    const totalSquares = GRID_ROWS * GRID_COLUMNS;
+
+    if (totalSquares !== SCORES[PLAYER1] + SCORES[PLAYER2]) {
+        return;
+    }
+    playerTurn.innerText =
+        SCORES[PLAYER1] > SCORES[PLAYER2] ? `Player1 WINS!` : `Player2 WINS!`;
+    const duration = 5 * 1000,
+        animationEnd = Date.now() + duration,
+        defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    const interval = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+            return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+
+        // since particles fall down, start a bit higher than random
+        confetti(
+            Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+            })
+        );
+        confetti(
+            Object.assign({}, defaults, {
+                particleCount,
+                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+            })
+        );
+    }, 250);
+}
+
+function restartGame() {
+    window.location.reload();
+}
+
+// ----------- UTILITY FUNCTIONS -----------:
+
+function makeGridPerSelection() {
+    dotsParent.style.gridTemplateRows = `repeat(${GRID_ROWS + 1}, 10vmin)`;
+    dotsParent.style.gridTemplateColumns = `repeat(${
+        GRID_COLUMNS + 1
+    }, 10vmin)`;
+    squareParent.style.gridTemplateRows = `repeat(${GRID_ROWS}, 10vmin)`;
+    squareParent.style.gridTemplateColumns = `repeat(${GRID_COLUMNS}, 10vmin)`;
 }
 
 // if dot selection is invalid, the function below will make the background black again, and will also change the value of the allDots element to null, so it doesn't count.
@@ -154,8 +233,21 @@ function resetDotColourIfInvalidChoice() {
     firstClickedDotEl = secondClickedDotEl = null;
 }
 
-function handleDotMouseOver(event) {
-    console.log(event.target);
+//functions to hover mouse hover effect considering the colour of the current player
+function handleDotHover(event) {
+    const dotID = event.target.id;
+    const dot = document.getElementById(dotID);
+    const currentPlayerColor = COLOUR[currentPlayer];
+    dot.style.backgroundColor = currentPlayerColor;
+}
+function addHoverEffectToDots() {
+    const dots = document.querySelectorAll("#dots > div");
+    dots.forEach(dot => {
+        dot.addEventListener("mouseover", handleDotHover);
+        dot.addEventListener("mouseout", function(event) {
+            event.target.style.backgroundColor = ""; // Reset to default when cursor leaves
+        });
+    });
 }
 
 function createDotDiv(_row, _column) {
@@ -210,10 +302,11 @@ function createLine() {
     updateGameState();
     renderUpdate();
 }
+
 function updateSquare(squareIndex, side) {
     //'top' or 'left' or 'right' or 'bottom'
     const square = GAME_STATE[squareIndex];
-    console.log({square,squareIndex})
+    console.log({ square, squareIndex });
     square[side] = true;
     // check if all the sides are complete
     if (square.left && square.right && square.top && square.bottom) {
@@ -222,38 +315,10 @@ function updateSquare(squareIndex, side) {
         SCORES[currentPlayer] += 1;
         renderScores();
     }
-    // square.owner = currentPlayer;
-
-    // if a player has claimed the square, keep their turn
-    // otherwise switch player
 }
 
 function renderScores() {
     scoreEl.innerText = `Player1 :  ${SCORES[PLAYER1]}   |   Player2 :   ${SCORES[PLAYER2]}`;
-}
-
-function updateGameState() {
-    // get the square and side  corresponding to firstDotClickID, secondDotClickID
-    // this MAY be two squares.
-    // update GAME_STATE[square] each of these sides.
-    const dotLocation = extractDotRowsAndColumns();
-
-    const isVerticalLine = dotLocation.r1 !== dotLocation.r2;
-
-    // "primary" square
-    const squareRow = Math.min(dotLocation.r1, dotLocation.r2);
-    const squareCol = Math.min(dotLocation.c1, dotLocation.c2);
-    const primaryIndex = squareRow * GRID_COLUMNS + squareCol;
-
-    updateSquare(primaryIndex, isVerticalLine ? "left" : "top");
-
-    //secondary (joining square)
-    const secondaryColumn = isVerticalLine ? squareCol - 1 : squareCol;
-    const secondaryRow = isVerticalLine ? squareRow : squareRow - 1;
-    if (secondaryColumn < 0 || secondaryRow < 0) return;
-
-    const secondaryIndex = secondaryRow * GRID_COLUMNS + secondaryColumn;
-    updateSquare(secondaryIndex, isVerticalLine ? "right" : "bottom");
 }
 
 function extractDotRowsAndColumns() {
@@ -291,54 +356,4 @@ function switchPlayer() {
     playerTurn.innerText = `Player ${currentPlayer}'s turn`;
 }
 
-function displayWinner() {
-    const totalSquares = GRID_ROWS * GRID_COLUMNS;
-
-    if (totalSquares !== SCORES[PLAYER1] + SCORES[PLAYER2]) {return}
-    playerTurn.innerText = SCORES[PLAYER1] > SCORES[PLAYER2] ? `Player1 WINS!` : `Player2 WINS!`
-    const duration = 5 * 1000,
-        animationEnd = Date.now() + duration,
-        defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-    function randomInRange(min, max) {
-        return Math.random() * (max - min) + min;
-    }
-
-    const interval = setInterval(function () {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-            return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-
-        // since particles fall down, start a bit higher than random
-        confetti(
-            Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-            })
-        );
-        confetti(
-            Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-            })
-        );
-    }, 250);
-}
-
-function restartGame() {
-    window.location.reload();
-}
-
 init();
-// console.log(allDots);
-
-/**
- * TODO:
- * 1. Check if a square is formed after each valid line creation -> The user who created this square formation line gets the point
- * 2. Win logic to compute the winner
- * 3. Optional -> Computer makes a move (vs Computer mode)
- */
