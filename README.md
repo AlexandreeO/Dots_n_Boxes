@@ -36,3 +36,4 @@ Future enhancements could include:
 Adding animations or sound effects for a more engaging experience.
 Implementing an AI opponent for single-player mode.
 Customizing game rules or difficulty levels.
+Fixing bugs (game state and creating wrong squares, lines moving on window resizing)
