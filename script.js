@@ -1,8 +1,9 @@
 // Constants for game configuration
-const GRID_ROWS = 6;
-const GRID_COLUMNS = 6;
+const GRID_ROWS = 3;
+const GRID_COLUMNS = 3;
 const PLAYER1 = 1;
 const PLAYER2 = 2;
+const TIE = -1
 
 // Other constants, variables, and DOM element references...
 const COLOUR = { [PLAYER1]: "brown", [PLAYER2]: "teal" };
@@ -24,6 +25,7 @@ let currentPlayer;
 let firstClickedDotEl;
 let secondClickedDotEl;
 let isSquareFormed = false;
+let winner;
 
 // /*----- global event listeners -----*/
 
@@ -34,8 +36,8 @@ restartButton.addEventListener("click", restartGame);
 function init() {
     // Initialize game state and variables...
     currentPlayer = PLAYER1;
-    for (let row = 0; row <= GRID_ROWS; row++) {
-        for (let column = 0; column <= GRID_COLUMNS; column++) {
+    for (let row = 0; row < GRID_ROWS; row++) {
+        for (let column = 0; column < GRID_COLUMNS; column++) {
             const square = {
                 row,
                 column,
@@ -48,11 +50,12 @@ function init() {
             GAME_STATE.push(square);
         }
     }
+    
     // Calls the functions to render the grid, dots, squares, and update display
     renderDots();
     renderBoxes();
     renderUpdate();
-    addHoverEffectToDots()
+    // addHoverEffectToDots()
 }
 
 // Functions to render the grid, dots, and squares
@@ -122,13 +125,13 @@ function handleDotClick(event) {
             allDots[firstDotClickID] = true;
             allDots[secondDotClickID] = true;
             createLine();
-            console.log(`CurrentPLayer: ${currentPlayer}`);
+            // console.log(`CurrentPLayer: ${currentPlayer}`);
             // if player completes a box, don't switch player
             if (!isSquareFormed) {
                 switchPlayer();
             } else {
                 isSquareFormed = false;
-                displayWinner();
+                checkWin();
             }
         } else {
             resetDotColourIfInvalidChoice();
@@ -152,27 +155,56 @@ function updateGameState() {
     const squareRow = Math.min(dotLocation.r1, dotLocation.r2);
     const squareCol = Math.min(dotLocation.c1, dotLocation.c2);
     const primaryIndex = squareRow * GRID_COLUMNS + squareCol;
-
-    updateSquare(primaryIndex, isVerticalLine ? "left" : "top");
-
+    
+    
     //secondary (joining square)
     const secondaryColumn = isVerticalLine ? squareCol - 1 : squareCol;
     const secondaryRow = isVerticalLine ? squareRow : squareRow - 1;
-    if (secondaryColumn < 0 || secondaryRow < 0) return;
-
     const secondaryIndex = secondaryRow * GRID_COLUMNS + secondaryColumn;
-    updateSquare(secondaryIndex, isVerticalLine ? "right" : "bottom");
+
+    if (
+        squareRow >= 0 ||
+        squareCol >= 0 ||
+        squareRow < GRID_ROWS.length ||
+        squareCol < GRID_COLUMNS.length
+    ) {
+        updateSquare(primaryIndex, isVerticalLine ? "left" : "top");
+    }
+
+    if (
+
+        secondaryColumn >= 0 ||
+        secondaryRow >= 0 ||
+        secondaryColumn < GRID_COLUMNS.length||
+        secondaryRow < GRID_ROWS.length 
+    ) {
+        updateSquare(secondaryIndex, isVerticalLine ? "right" : "bottom");
+    }
+
 }
 
-function displayWinner() {
-    const totalSquares = GRID_ROWS * GRID_COLUMNS;
 
-    if (totalSquares !== SCORES[PLAYER1] + SCORES[PLAYER2]) {
-        return;
+function checkWin() {
+    const hasEmptySquare = GAME_STATE.some(square => !square.owner)
+    if (hasEmptySquare) return;
+
+    if (SCORES[PLAYER1] === SCORES[PLAYER2]) {
+        winner = TIE
+    } else {
+        winner = SCORES[PLAYER1] > SCORES[PLAYER2] ? PLAYER1 : PLAYER2;
     }
-    playerTurn.innerText =
-        SCORES[PLAYER1] > SCORES[PLAYER2] ? `Player1 WINS!` : `Player2 WINS!`;
-    const duration = 5 * 1000,
+
+    renderWinner()
+}
+
+function renderWinner() {
+    playerTurn.innerText = winner === TIE ? `It's a TIE!` : `Player${winner} WINS`
+    renderConfetti()
+}
+
+
+function renderConfetti() {
+        const duration = 5 * 1000,
         animationEnd = Date.now() + duration,
         defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
@@ -233,22 +265,22 @@ function resetDotColourIfInvalidChoice() {
     firstClickedDotEl = secondClickedDotEl = null;
 }
 
-//functions to hover mouse hover effect considering the colour of the current player
-function handleDotHover(event) {
-    const dotID = event.target.id;
-    const dot = document.getElementById(dotID);
-    const currentPlayerColor = COLOUR[currentPlayer];
-    dot.style.backgroundColor = currentPlayerColor;
-}
-function addHoverEffectToDots() {
-    const dots = document.querySelectorAll("#dots > div");
-    dots.forEach(dot => {
-        dot.addEventListener("mouseover", handleDotHover);
-        dot.addEventListener("mouseout", function(event) {
-            event.target.style.backgroundColor = ""; // Reset to default when cursor leaves
-        });
-    });
-}
+// //functions to hover mouse hover effect considering the colour of the current player
+// function handleDotHover(event) {
+//     const dotID = event.target.id;
+//     const dot = document.getElementById(dotID);
+//     const currentPlayerColor = COLOUR[currentPlayer];
+//     dot.style.backgroundColor = currentPlayerColor;
+// }
+// function addHoverEffectToDots() {
+//     const dots = document.querySelectorAll("#dots > div");
+//     dots.forEach(dot => {
+//         dot.addEventListener("mouseover", handleDotHover);
+//         dot.addEventListener("mouseout", function(event) {
+//             event.target.style.backgroundColor = ""; // Reset to default when cursor leaves
+//         });
+//     });
+// }
 
 function createDotDiv(_row, _column) {
     const identifier = `r${_row}c${_column}`;
@@ -306,7 +338,9 @@ function createLine() {
 function updateSquare(squareIndex, side) {
     //'top' or 'left' or 'right' or 'bottom'
     const square = GAME_STATE[squareIndex];
-    console.log({ square, squareIndex });
+    // console.log({ square, squareIndex });
+    // if (!square) return;
+    
     square[side] = true;
     // check if all the sides are complete
     if (square.left && square.right && square.top && square.bottom) {
@@ -315,6 +349,8 @@ function updateSquare(squareIndex, side) {
         SCORES[currentPlayer] += 1;
         renderScores();
     }
+
+    // console.table(GAME_STATE);
 }
 
 function renderScores() {
